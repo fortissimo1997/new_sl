@@ -6,21 +6,27 @@
 #include <signal.h>
 #include <unistd.h>
 
-int add_line(int x, char*buffer);
+int add_line(int x, int h, char *buffer);
 
 int my_mvaddstr(int y, int x, char *str){
-  for(; x < 0; ++x, ++str)
-    if(*str == '\0') return ERR;
-  for(; *str != '\0'; ++str, ++x)
-    if(mvaddch(y, x, *str) == ERR) return ERR;
+  char *p = str;
+  for(; x < 0; ++x, ++p)
+    if(*p == '\0') return ERR;
+  for(; *p != '\0'; ++p, ++x)
+    if(mvaddch(y, x, *p) == ERR) return ERR;
   return OK;
 }
 
 int main(int argc, char *argv[]){
   int x;
-  char buffer[4096];
+  int h = 0;
+  char *buffer;
   char *shell, *eob;
   FILE *fp;
+  if((buffer = malloc(4096 * sizeof(char))) == NULL){
+    fprintf(stderr, "cannot allocate buffer!\n");
+    exit(-1);
+  }
   shell = getenv("SHELL");
   if(shell == NULL){
     fprintf(stderr, "cannot get login shell!\n");
@@ -30,39 +36,37 @@ int main(int argc, char *argv[]){
     fprintf(stderr, "cannot open shell!\n");
     exit(-1);
   }
-  /*
   initscr();
   noecho();
   leaveok(stdscr, TRUE);
   scrollok(stdscr, FALSE);
-  */
   while(1){
     eob = fgets(buffer, 4096, fp);
-    if(eob == NULL) break;
+    if(feof(fp)) break;
+    /*
     eob = strchr(buffer, '\n');
     if(eob != NULL)
       *eob = '\0';
-      /*
+      */
     for(x = COLS - 1; ; --x){
-      if(add_line(x, buffer) == ERR) break;
+      if(add_line(x, h, buffer) == ERR) break;
       refresh();
       usleep(20000);
     }
     mvcur(0, COLS - 1, LINES - 1, 0);
-    */
+    h++;
     
-    fprintf(stdout, "%s\n", buffer);
+//    fprintf(stdout, "%s\n", buffer);
   }
 
-/*
   endwin();
   pclose(fp);
-  */
+  free(buffer);
   return 0;
 }
 
-int add_line(int x, char *buffer){
-  int y = LINES - (COLS / 6);
+int add_line(int x, int h, char *buffer){
+  int y = LINES - (COLS / 6) + h;
   my_mvaddstr(y, x, buffer);
   return OK;
 }
