@@ -6,6 +6,8 @@
 #include <signal.h>
 #include <unistd.h>
 
+int add_line(int x, char*buffer);
+
 int my_mvaddstr(int y, int x, char *str){
   for(; x < 0; ++x, ++str)
     if(*str == '\0') return ERR;
@@ -15,6 +17,7 @@ int my_mvaddstr(int y, int x, char *str){
 }
 
 int main(int argc, char *argv[]){
+  int x;
   char buffer[4096];
   char *shell, *eob;
   FILE *fp;
@@ -27,30 +30,39 @@ int main(int argc, char *argv[]){
     fprintf(stderr, "cannot open shell!\n");
     exit(-1);
   }
+  /*
+  initscr();
+  noecho();
+  leaveok(stdscr, TRUE);
+  scrollok(stdscr, FALSE);
+  */
   while(1){
     eob = fgets(buffer, 4096, fp);
-    if(feof(fp)){
-      break;
-    }
+    if(eob == NULL) break;
     eob = strchr(buffer, '\n');
     if(eob != NULL)
       *eob = '\0';
-    initscr();
-    signal(SIGINT, SIG_IGN);
-    noecho();
-    leaveok(stdscr, TRUE);
-    scrollok(stdscr, FALSE);
-    for(int x = COLS - 1; ; --x){
-      if(add_line(x) == ERR) break;
+      /*
+    for(x = COLS - 1; ; --x){
+      if(add_line(x, buffer) == ERR) break;
       refresh();
       usleep(20000);
     }
     mvcur(0, COLS - 1, LINES - 1, 0);
-    endwin();
+    */
     
-//    fprintf(stdout, "%s\n", buffer);
+    fprintf(stdout, "%s\n", buffer);
   }
 
+/*
+  endwin();
   pclose(fp);
+  */
   return 0;
+}
+
+int add_line(int x, char *buffer){
+  int y = LINES - (COLS / 6);
+  my_mvaddstr(y, x, buffer);
+  return OK;
 }
