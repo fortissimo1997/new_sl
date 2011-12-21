@@ -8,7 +8,9 @@
 CC=cc
 CFLAGS=-O
 
-sl: sl.c sl.h
-	$(CC) $(CFLAGS) -o sl sl.c -lcurses -ltermcap
+#sl: sl.c sl.h
+#	$(CC) $(CFLAGS) -o sl sl.c -lcurses -ltermcap
 #	$(CC) $(CFLAGS) -o sl sl.c -lcurses
 
+new_shell: new_shell.c sl.h
+	$(CC) $(CFLAGS) -o sl new_shell.c -lcurses -ltermcap

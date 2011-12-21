@@ -55,7 +55,7 @@ int main(int argc, char *argv[]){
     dup2(pipefd[1], 1);
     close(pipefd[1]);
 
-    execl(shell, shell);
+    execl(shell, shell, NULL);
     exit(EXIT_FAILURE);
   }else{
     close(pipefd[1]);
