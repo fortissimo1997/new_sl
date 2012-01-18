@@ -6,7 +6,7 @@
 #include <signal.h>
 #include <unistd.h>
 
-int add_line(int x, int h, char *buffer);
+int add_line(int x, char **buffer, int size);
 
 void sigcatch(int sig){
   printf("exit\n");
@@ -25,16 +25,23 @@ int my_mvaddstr(int y, int x, char *str){
 int main(int argc, char *argv[]){
   int x;
   int h = 0;
-  char *buffer;
+  int i;
+  int size = 0;
+  char **buffer;
   char *shell, *eob;
   pid_t cpid;
   int pipefd[2];
-
+  FILE *fp;
 
   shell = getenv("SHELL");
   if(shell == NULL){
     fprintf(stderr, "cannot get login shell!\n");
     exit(EXIT_FAILURE);
+  }
+
+  buffer = malloc(sizeof(char *) * 10);
+  for(i = 0; i < 10; i++){
+    *(buffer + i) = malloc(sizeof(char) * 4096);
   }
 
   if(pipe(pipefd) == -1){
@@ -66,44 +73,43 @@ int main(int argc, char *argv[]){
       perror("signal");
       exit(1);
     }
+    fp = fopen("test.log", "a");
     
-    if((buffer = malloc(4096 * sizeof(char))) == NULL){
-      fprintf(stderr, "cannot allocate buffer!\n");
-      exit(EXIT_FAILURE);
-    }
-
-//    eob = fgets(buffer, 4096, stdin);
-//    printf("%s\n", buffer);
-//    printf("%s\n", eob);
     initscr();
     noecho();
     leaveok(stdscr, TRUE);
     scrollok(stdscr, FALSE);
-    h = 0;
-    while(1){
-      eob = fgets(buffer, 4096, stdin);
-//      eob = strchr(buffer, '\n');
-//      if(eob != NULL)
-//        *eob = '\0';
-      for(x = COLS - 1; ; --x){
-        if(add_line(x, h, buffer) == ERR) break;
-        refresh();
-        usleep(20000);
-      }
-//      buffer = strchr(buffer, '\n');
-//      printf("%s\n", buffer);
-      h++;
+    for(size = 0; size < 10; size++){
+      fprintf(fp, "%d\n", size);
+      eob = fgets(*(buffer+size), 4096, stdin);
+      if(eob == NULL) break;
+      fprintf(fp, "%s\n", *(buffer+size));
+    }
+    for(x = COLS - 1; x > -COLS; --x){
+      if(add_line(x, buffer, size) == ERR) break;
+      refresh();
+      usleep(20000);
+      fprintf(fp, "x=%d\n", x);
     }
     mvcur(0, COLS - 1, LINES - 1, 0);
+    kill(cpid, SIGKILL);
   }
+  fclose(fp);
 
   endwin();
+  for(i = 0; i < 10; i++){
+    free(*(buffer+i));
+  }
   free(buffer);
+  printf("OK\n");
   return 0;
 }
 
-int add_line(int x, int h, char *buffer){
-  int y = LINES - (COLS / 6) + h;
-  my_mvaddstr(y, x, buffer);
+int add_line(int x, char **buffer, int size){
+  int i;
+  int y = LINES - (COLS / 6);
+  for(i = 0; i < size; i++){
+    my_mvaddstr(y+i, x, *(buffer+i));
+  }
   return OK;
 }
