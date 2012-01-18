@@ -72,29 +72,29 @@ int main(int argc, char *argv[]){
       exit(EXIT_FAILURE);
     }
 
+//    eob = fgets(buffer, 4096, stdin);
+//    printf("%s\n", buffer);
+//    printf("%s\n", eob);
     initscr();
     noecho();
     leaveok(stdscr, TRUE);
     scrollok(stdscr, FALSE);
+    h = 0;
     while(1){
       eob = fgets(buffer, 4096, stdin);
 //      eob = strchr(buffer, '\n');
 //      if(eob != NULL)
 //        *eob = '\0';
-      do{
-        for(x = COLS - 1; ; --x){
-          if(add_line(x, h, buffer) == ERR) break;
-          refresh();
-          usleep(20000);
-        }
-        buffer = strchr(buffer, '\n');
-        printf("%s\n", buffer);
-      }while(buffer = strchr(buffer, '\n'));
-      mvcur(0, COLS - 1, LINES - 1, 0);
+      for(x = COLS - 1; ; --x){
+        if(add_line(x, h, buffer) == ERR) break;
+        refresh();
+        usleep(20000);
+      }
+//      buffer = strchr(buffer, '\n');
+//      printf("%s\n", buffer);
       h++;
-    
-//    fprintf(stdout, "%s\n", buffer);
     }
+    mvcur(0, COLS - 1, LINES - 1, 0);
   }
 
   endwin();
