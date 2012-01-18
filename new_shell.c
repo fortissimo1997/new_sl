@@ -39,11 +39,6 @@ int main(int argc, char *argv[]){
     exit(EXIT_FAILURE);
   }
 
-  buffer = malloc(sizeof(char *) * 10);
-  for(i = 0; i < 10; i++){
-    *(buffer + i) = malloc(sizeof(char) * 4096);
-  }
-
   if(pipe(pipefd) == -1){
     perror("pipe");
     exit(EXIT_FAILURE);
@@ -79,19 +74,26 @@ int main(int argc, char *argv[]){
     noecho();
     leaveok(stdscr, TRUE);
     scrollok(stdscr, FALSE);
-    for(size = 0; size < 10; size++){
-      fprintf(fp, "%d\n", size);
-      eob = fgets(*(buffer+size), 4096, stdin);
-      if(eob == NULL) break;
-      fprintf(fp, "%s\n", *(buffer+size));
+    buffer = malloc(sizeof(char *) * (LINES - 1));
+    for(i = 0; i < LINES - 1; i++){
+      *(buffer + i) = malloc(sizeof(char) * 4096);
     }
-    for(x = COLS - 1; x > -COLS; --x){
-      if(add_line(x, buffer, size) == ERR) break;
-      refresh();
-      usleep(20000);
-      fprintf(fp, "x=%d\n", x);
+
+    while(1){
+      for(size = 0; size < LINES-1; size++){
+        fprintf(fp, "%d\n", size);
+        eob = fgets(*(buffer+size), 4096, stdin);
+        if(eob == NULL) break;
+        fprintf(fp, "%s\n", *(buffer+size));
+      }
+      for(x = COLS - 1; x > -COLS; --x){
+        if(add_line(x, buffer, size) == ERR) break;
+        refresh();
+        usleep(20000);
+        fprintf(fp, "x=%d\n", x);
+      }
+      mvcur(0, COLS - 1, LINES - 1, 0);
     }
-    mvcur(0, COLS - 1, LINES - 1, 0);
     kill(cpid, SIGKILL);
   }
   fclose(fp);
@@ -107,9 +109,8 @@ int main(int argc, char *argv[]){
 
 int add_line(int x, char **buffer, int size){
   int i;
-  int y = LINES - (COLS / 6);
   for(i = 0; i < size; i++){
-    my_mvaddstr(y+i, x, *(buffer+i));
+    my_mvaddstr(i, x, *(buffer+i));
   }
   return OK;
 }
