@@ -84,6 +84,9 @@ int main(int argc, char *argv[]){
         fprintf(fp, "%d\n", size);
         eob = fgets(*(buffer+size), 4096, stdin);
         if(eob == NULL) break;
+        eob = strchr(*(buffer+size), '\n');
+        if(eob != NULL)
+          eob = '\0';
         fprintf(fp, "%s\n", *(buffer+size));
       }
       for(x = COLS - 1; x > -COLS; --x){
